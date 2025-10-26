@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { BreathingRite, Session } from '../types';
-import { SoulEmber } from './SoulEmber';
+import { RealisticFlame } from './RealisticFlame';
 import { AudioNarrator } from './AudioNarrator';
 import { DynamicBackground } from './DynamicBackground';
 import { v4 as uuidv4 } from 'uuid';
@@ -103,9 +103,9 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
           <p className="text-ash-300 text-lg">{rite.description}</p>
         </div>
 
-        {/* Soul Ember */}
+        {/* Realistic Flame */}
         <div className="mb-8">
-          <SoulEmber 
+          <RealisticFlame 
             level="steady-flame" 
             covenant={covenant as any}
             isBreathing={true}

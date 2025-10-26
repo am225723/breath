@@ -2,7 +2,7 @@ import React from 'react';
 import type { BreathingPattern, UserProgress } from '../types';
 import { BREATHING_RITES } from '../data/breathingRites';
 import { COVENANTS } from '../data/covenants';
-import { SoulEmber } from './SoulEmber';
+import { RealisticFlame } from './RealisticFlame';
 
 interface MainMenuProps {
   progress: UserProgress;
@@ -48,9 +48,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           )}
         </div>
 
-        {/* Soul Ember Display */}
+        {/* Realistic Flame Display */}
         <div className="mb-8">
-          <SoulEmber 
+          <RealisticFlame 
             level={progress.bonfireLevel} 
             covenant={progress.covenant}
           />
