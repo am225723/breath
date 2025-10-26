@@ -1,89 +1,146 @@
 import React from 'react';
-// FIX: Import the full 'Covenant' object type, not just 'CovenantType'
-import type { BreathingRite, CovenantType, Session, Covenant } from '../types'; 
+import type { BreathingPattern, UserProgress } from '../types';
+// FIX: Imports were uppercase
 import { BREATHING_RITES } from '../data/breathingRites';
 import { COVENANTS } from '../data/covenants';
+// FIX: Using the correct flame component with .tsx
 import { RealisticFlame } from './RealisticFlameComplete.tsx';
 
 interface MainMenuProps {
-  onStartSession: (rite: BreathingRite, covenant?: CovenantType) => void;
-  onShowJournal: () => void;
-  onShowMap: () => void;
-  lastSession?: Session;
+  progress: UserProgress;
+  onSelectRite: (rite: BreathingPattern) => void;
+  onViewProgress: () => void;
+  onViewInfo: () => void;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({
-  onStartSession,
-  onShowJournal,
-  onShowMap,
-  lastSession,
+export const MainMenu: React.FC<MainMenuProps> = ({ 
+  progress, 
+  onSelectRite,
+  onViewProgress,
+  onViewInfo
 }) => {
-  const defaultRite = Object.values(BREATHING_RITES)[0];
-  
-  // FIX: Change the parameter 'c' to be of type 'Covenant'
-  const lastCovenant = lastSession 
-    ? Object.values(COVENANTS).find((c: Covenant) => c.id === lastSession.covenant) 
-    : undefined;
+  const covenant = progress.covenant ? COVENANTS[progress.covenant] : null;
+
+  const getBonfireLevelText = () => {
+    switch (progress.bonfireLevel) {
+      case 'first-flame': return 'First Flame';
+      case 'roaring': return 'Roaring';
+      case 'steady-flame': return 'Steady Flame';
+      default: return 'Smoldering';
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-ash-300">
-      
-      {/* Background gradient based on last covenant */}
-      <div className={`absolute inset-0 bg-gradient-to-b ${
-        lastCovenant?.id === 'respite' ? 'from-blue-900/20 to-transparent' :
-        lastCovenant?.id === 'focus' ? 'from-slate-900/20 to-transparent' :
-        lastCovenant?.id === 'vigor' ? 'from-yellow-900/20 to-transparent' :
-        'from-transparent to-transparent'
-      }`} />
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
+      {/* Covenant background tint */}
+      {covenant && (
+        <div className={`absolute inset-0 bg-gradient-to-b ${covenant.uiTint}`} />
+      )}
 
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
-        {/* Flame */}
+      <div className="relative z-10 w-full max-w-6xl">
+        {/* Header with Soul Ember */}
+        <div className="text-center mb-8">
+          <h1 className="text-6xl font-bold text-ember-400 mb-4 text-shadow-lg">
+            The Path of Embers
+          </h1>
+          {covenant && (
+            <div className="text-xl text-ash-300 mb-2">
+              {covenant.name}
+            </div>
+          )}
+        </div>
+
+        {/* Realistic Flame Display */}
         <div className="mb-8">
           <RealisticFlame 
-            level="steady-flame"
-            covenant={lastCovenant?.id}
-            isBreathing={false}
+            level={progress.bonfireLevel} 
+            covenant={progress.covenant}
           />
         </div>
 
-        {/* Title */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-ember-400 mb-4 text-shadow-lg">
-            Path of Embers
-          </h1>
-          <p className="text-xl text-ash-400">
-            {lastSession 
-              ? `Welcome back, traveler. Your last rite was ${lastSession.rite}.`
-              : 'A traveler arrives. Kindle the flame and begin your journey.'
-            }
-          </p>
+        {/* Bonfire Status */}
+        <div className="text-center mb-8">
+          <div className="inline-block bg-ash-800/80 backdrop-blur-sm rounded-lg p-6 border border-ash-700">
+            <div className="grid grid-cols-3 gap-8">
+              <div>
+                <div className="text-3xl font-bold text-ember-400">
+                  {progress.currentStreak}
+                </div>
+                <div className="text-sm text-ash-400">Day Streak</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-ember-400">
+                  {getBonfireLevelText()}
+                </div>
+                <div className="text-sm text-ash-400">Bonfire Level</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-ember-400">
+                  {progress.totalSessions}
+                </div>
+                <div className="text-sm text-ash-400">Total Sessions</div>
+              </div>
+            </div>
+            
+            {progress.gracePeriodEnd && new Date() < progress.gracePeriodEnd && (
+              <div className="mt-4 text-amber-400 text-sm">
+                ⚠️ Grace Period Active - Complete a session to restore your flame
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Main Actions */}
-        <div className="flex flex-col sm-flex-row gap-6 mb-12">
-          <button
-            onClick={() => onStartSession(defaultRite, lastCovenant?.id)}
-            className="px-10 py-5 bg-ember-600 hover:bg-ember-500 text-ash-900 text-2xl font-bold rounded-lg transition-colors text-shadow-sm shadow-lg"
-          >
-            Begin Rite
-          </button>
-          <button
-            onClick={onShowJournal}
-            className="px-8 py-4 bg-ash-700 hover:bg-ash-600 text-ash-100 text-xl rounded-lg transition-colors shadow-md"
-          >
-            Chronicler's Journal
-          </button>
-          <button
-            onClick={onShowMap}
-            className="px-8 py-4 bg-ash-700 hover:bg-ash-600 text-ash-100 text-xl rounded-lg transition-colors shadow-md"
-          >
-            Traveler's Map
-          </button>
+        {/* Breathing Rites Selection */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-ember-300 mb-4 text-center">
+            Choose Your Rite
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {Object.values(BREATHING_RITES).map((rite) => {
+              const isPreferred = covenant?.preferredRites.includes(rite.id);
+              return (
+                <button
+                  key={rite.id}
+                  onClick={() => onSelectRite(rite.id)}
+                  className={`group p-6 rounded-lg border-2 transition-all duration-300 text-left ${
+                    isPreferred
+                      ? 'bg-ash-800 border-ember-600 hover:bg-ash-700'
+                      : 'bg-ash-800/50 border-ash-700 hover:bg-ash-800 hover:border-ash-600'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-xl font-bold text-ember-400">
+                      {rite.name}
+                    </h3>
+                    {isPreferred && (
+                      <span className="text-xs bg-ember-600 text-ash-900 px-2 py-1 rounded">
+                        Preferred
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-ash-300 text-sm">
+                    {rite.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Footer Info */}
-        <div className="text-center text-ash-500">
-          <p>Select a breathing rite to begin, or review your past journeys.</p>
+        {/* View Progress Button */}
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={onViewProgress}
+            className="px-8 py-3 bg-ash-700 hover:bg-ash-600 text-ash-100 rounded-lg transition-colors"
+          >
+            📜 Chronicler's Map
+          </button>
+          <button
+            onClick={onViewInfo}
+            className="px-8 py-3 bg-ash-700 hover:bg-ash-600 text-ash-100 rounded-lg transition-colors"
+          >
+            ℹ️ About
+          </button>
         </div>
       </div>
     </div>
