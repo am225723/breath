@@ -59,7 +59,7 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
     const baseY = canvas.height * 0.75;
 
     // Get covenant color
-    const covenantColor = covenant ? COVENANTS[covenant].glowColor : 'rgba(255, 200, 0, 0.5)';
+    // const covenantColor = covenant ? COVENANTS[covenant].glowColor : 'rgba(255, 200, 0, 0.5)';
 
     // Breathing scale
     let breathScale = 1;
@@ -373,7 +373,7 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
         className="max-w-full h-auto"
         style={{ 
           filter: 'blur(0.5px)',
-          imageRendering: 'high-quality'
+          imageRendering: 'crisp-edges'
         }}
       />
     </div>
