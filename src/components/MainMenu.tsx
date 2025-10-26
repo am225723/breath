@@ -1,8 +1,10 @@
 import React from 'react';
 import type { BreathingRite, CovenantType, Session } from '../types';
-import { breathingRites } from '../data/breathingRites';
-import { covenants } from '../data/covenants';
-import { RealisticFlame } from './RealisticFlameComplete.tsx';
+// FIX 1: Import the uppercase versions
+import { BREATHING_RITES } from '../data/breathingRites';
+import { COVENANTS } from '../data/covenants';
+// This import path was fixed in the previous step
+import { RealisticFlame } from './RealisticFlameComplete.tsx'; 
 
 interface MainMenuProps {
   onStartSession: (rite: BreathingRite, covenant?: CovenantType) => void;
@@ -17,8 +19,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onShowMap,
   lastSession,
 }) => {
-  const defaultRite = breathingRites[0];
-  const lastCovenant = lastSession ? covenants.find(c => c.id === lastSession.covenant) : undefined;
+  // FIX 2: Use Object.values() since BREATHING_RITES is an object
+  const defaultRite = Object.values(BREATHING_RITES)[0]; 
+  
+  // FIX 3: Use Object.values() and provide a type for 'c' to fix TS7006
+  const lastCovenant = lastSession 
+    ? Object.values(COVENANTS).find((c: CovenantType) => c.id === lastSession.covenant) 
+    : undefined;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-ash-300">
