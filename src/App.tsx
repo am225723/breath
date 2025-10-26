@@ -7,6 +7,7 @@ import { ChroniclersMap } from './components/ChroniclersMap';
 import { TravelerEcho } from './components/TravelerEcho';
 import { LeaveEcho } from './components/LeaveEcho';
 import { InfoPanel } from './components/InfoPanel';
+import { StarryBackground } from './components/StarryBackground';
 import { BREATHING_RITES } from './data/breathingRites';
 import { 
   loadProgress, 
@@ -132,6 +133,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-ash-900">
+      <StarryBackground />
+      
       {appState === 'covenant-selection' && (
         <CovenantSelection onSelect={handleCovenantSelect} />
       )}
