@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { BreathingRite, Session, CovenantType } from '../types';
-import { RealisticFlame } from './RealisticFlameComplete.tsx';
-import { AudioNarrator } from './AudioNarrator';
-import { DynamicBackground } from './DynamicBackground';
+// FIX: Use default import for RealisticFlame
+import RealisticFlame from './RealisticFlameComplete.tsx';
+// FIX: Add .tsx extension for module resolution
+import { AudioNarrator } from './AudioNarrator.tsx';
+import { DynamicBackground } from './DynamicBackground.tsx';
 import { v4 as uuidv4 } from 'uuid';
 
 interface BreathingSessionProps {
@@ -187,3 +189,4 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
     </div>
   );
 };
+
