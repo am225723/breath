@@ -45,7 +45,7 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
   const flameParticlesRef = useRef<FlameParticle[]>([]);
   const embersRef = useRef<Ember[]>([]);
   const timeRef = useRef(0);
-  const animationFrameRef = useRef<number | undefined>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const canvas = canvasRef.current;

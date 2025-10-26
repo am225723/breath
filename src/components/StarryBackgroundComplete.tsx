@@ -26,7 +26,7 @@ interface Star {
 export const StarryBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
-  const animationFrameRef = useRef<number | undefined>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const canvas = canvasRef.current;

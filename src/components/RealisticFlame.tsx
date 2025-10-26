@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import type { BonfireLevel, CovenantType } from '../types';
-import { COVENANTS } from '../data/covenants';
 
 interface RealisticFlameProps {
   level: BonfireLevel;
