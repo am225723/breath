@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { BreathingRite, Session } from '../types';
+import type { BreathingRite, Session, CovenantType } from '../types';
 import { RealisticFlame } from './RealisticFlame';
 import { AudioNarrator } from './AudioNarrator';
 import { DynamicBackground } from './DynamicBackground';
@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface BreathingSessionProps {
   rite: BreathingRite;
-  covenant?: string;
+  covenant?: CovenantType;
   onComplete: (session: Session) => void;
   onCancel: () => void;
   preRitualNote?: string;
@@ -75,6 +75,13 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
     };
     onComplete(session);
   }, [startTime, rite.id, cycleCount, preRitualNote, covenant, onComplete]);
+
+    // Auto-complete for Dragon's Roar after set cycles
+    useEffect(() => {
+      if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
+        handleComplete();
+      }
+    }, [cycleCount, totalCycles, rite.id, handleComplete]);
 
   const progress = (phaseProgress / currentPhase.duration) * 100;
   const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
