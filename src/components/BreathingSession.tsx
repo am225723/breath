@@ -30,6 +30,20 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
   const currentPhase = rite.phases[currentPhaseIndex];
   const totalCycles = rite.cycles || Infinity;
 
+  const handleComplete = useCallback(() => {
+    const duration = Math.floor((Date.now() - startTime) / 1000);
+    const session: Session = {
+      id: uuidv4(),
+      date: new Date(),
+      rite: rite.id,
+      duration,
+      cycles: cycleCount,
+      preRitualNote,
+      covenant: covenant,
+    };
+    onComplete(session);
+  }, [startTime, rite.id, cycleCount, preRitualNote, covenant, onComplete]);
+
   useEffect(() => {
     if (isPaused) return;
 
@@ -61,27 +75,6 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
       handleComplete();
     }
   }, [cycleCount, totalCycles, rite.id, handleComplete]);
-
-  const handleComplete = useCallback(() => {
-    const duration = Math.floor((Date.now() - startTime) / 1000);
-    const session: Session = {
-      id: uuidv4(),
-      date: new Date(),
-      rite: rite.id,
-      duration,
-      cycles: cycleCount,
-      preRitualNote,
-      covenant: covenant,
-    };
-    onComplete(session);
-  }, [startTime, rite.id, cycleCount, preRitualNote, covenant, onComplete]);
-
-    // Auto-complete for Dragon's Roar after set cycles
-    useEffect(() => {
-      if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
-        handleComplete();
-      }
-    }, [cycleCount, totalCycles, rite.id, handleComplete]);
 
   const progress = (phaseProgress / currentPhase.duration) * 100;
   const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
