@@ -1,10 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import type { BonfireLevel, CovenantType } from '../types';
-import { COVENANTS } from '../data/covenants';
 
 interface RealisticFlameProps {
-  level: BonfireLevel;
-  covenant?: CovenantType;
+  level: number;
+  covenant?: string;
   isBreathing?: boolean;
   breathPhase?: 'inhale' | 'hold' | 'exhale' | 'hold-empty';
 }
@@ -85,27 +83,34 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
     let flameHeight = 1.2;
 
     switch (level) {
-      case 'first-flame':
+      case 3:
         baseSize = 130;
         particleDensity = 30;
         emberRate = 0.7;
         glowIntensity = 1.2;
         flameHeight = 1.5;
         break;
-      case 'roaring':
+      case 2:
         baseSize = 110;
         particleDensity = 23;
         emberRate = 0.55;
         glowIntensity = 0.95;
         flameHeight = 1.4;
         break;
-      case 'steady-flame':
+      case 1:
         baseSize = 95;
         particleDensity = 18;
         emberRate = 0.45;
         glowIntensity = 0.75;
         flameHeight = 1.3;
         break;
+        default:
+          baseSize = 80;
+          particleDensity = 15;
+          emberRate = 0.3;
+          glowIntensity = 0.6;
+          flameHeight = 1.2;
+          break;
     }
 
     const getFlameColor = (heat: number, alpha: number = 1): string => {
@@ -341,7 +346,7 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
         className="max-w-full h-auto"
         style={{ 
           filter: 'blur(0.5px)',
-          imageRendering: 'high-quality'
+          imageRendering: 'crisp-edges'
         }}
       />
     </div>

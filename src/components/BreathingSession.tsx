@@ -106,7 +106,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
         {/* Realistic Flame */}
         <div className="mb-8">
           <RealisticFlame 
-            level="steady-flame" 
+            level={1} 
             covenant={covenant as any}
             isBreathing={true}
             breathPhase={currentPhase.type}

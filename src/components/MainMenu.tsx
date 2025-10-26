@@ -51,7 +51,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* Realistic Flame Display */}
         <div className="mb-8">
           <RealisticFlame 
-            level={progress.bonfireLevel} 
+            level={progress.bonfireLevel === "smoldering" ? 0 : progress.bonfireLevel === "steady-flame" ? 1 : progress.bonfireLevel === "roaring" ? 2 : 3} 
             covenant={progress.covenant}
           />
         </div>
