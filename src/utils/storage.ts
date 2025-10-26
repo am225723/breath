@@ -14,7 +14,7 @@ export const loadProgress = (): UserProgress => {
       ...parsed,
       lastSessionDate: parsed.lastSessionDate ? new Date(parsed.lastSessionDate) : undefined,
       gracePeriodEnd: parsed.gracePeriodEnd ? new Date(parsed.gracePeriodEnd) : undefined,
-      sessions: parsed.sessions.map((s: any) => ({
+      sessions: parsed.sessions.map((s: Session) => ({
         ...s,
         date: new Date(s.date),
       })),
@@ -115,7 +115,7 @@ export const loadEchoes = (): TravelerEcho[] => {
   const stored = localStorage.getItem(STORAGE_KEYS.ECHOES);
   if (stored) {
     const parsed = JSON.parse(stored);
-    return parsed.map((e: any) => ({
+    return parsed.map((e: TravelerEcho) => ({
       ...e,
       timestamp: new Date(e.timestamp),
     }));

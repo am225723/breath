@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonfire Flame Animation Preview</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .preview-container {
+            text-align: center;
+            color: white;
+        }
+        .flame-visual {
+            font-size: 150px;
+            margin: 20px 0;
+            animation: flicker 2s infinite;
+        }
+        @keyframes flicker {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            25% { opacity: 0.8; transform: scale(1.05); }
+            50% { opacity: 1; transform: scale(0.95); }
+            75% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .description {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .levels {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .level {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+        }
+        .level h3 {
+            margin: 0 0 10px 0;
+            color: #ff6b35;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <!-- Stars Background -->
+    <div id="stars"></div>
+    
+    <div class="preview-container">
+        <h1>🔥 Bonfire Animation System Preview</h1>
+        
+        <div class="flame-visual">🔥</div>
+        
+        <div class="description">
+            <h2>What the Flame Looks Like</h2>
+            <p>The bonfire animation system features a realistic, volumetric flame with multiple layers of rendering:</p>
+            <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+                <li>🌊 <strong>4-Layer Volumetric Rendering</strong>: Atmospheric glow, outer glow, core flame, and hot core</li>
+                <li>🎨 <strong>Physically-Based Colors</strong>: From white-hot core to deep red edges</li>
+                <li>✨ <strong>Rising Embers</strong>: Small particles that float upward from the flame</li>
+                <li>🌬️ <strong>Breathing Synchronization</strong>: Flame responds to breathing patterns</li>
+                <li>💫 <strong>Multi-Frequency Turbulence</strong>: Natural, realistic movement</li>
+            </ul>
+        </div>
+        
+        <div class="levels">
+            <div class="level">
+                <h3>Smoldering</h3>
+                <div>🔥</div>
+                <small>Small, gentle flame<br/>15 particles/frame</small>
+            </div>
+            <div class="level">
+                <h3>Steady Flame</h3>
+                <div>🔥🔥</div>
+                <small>Medium, balanced<br/>18 particles/frame</small>
+            </div>
+            <div class="level">
+                <h3>Roaring</h3>
+                <div>🔥🔥🔥</div>
+                <small>Large, intense<br/>23 particles/frame</small>
+            </div>
+            <div class="level">
+                <h3>First Flame</h3>
+                <div>🔥🔥🔥🔥</div>
+                <small>Maximum intensity<br/>30 particles/frame</small>
+            </div>
+        </div>
+        
+        <div class="description">
+            <h3>🌟 Starry Background</h3>
+            <p>The system also includes a beautiful starry background with:</p>
+            <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+                <li>200 twinkling stars</li>
+                <li>Deep space gradient background</li>
+                <li>Responsive to window resize</li>
+                <li>Performance optimized</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h3>🎯 Key Features</h3>
+            <p>✅ 60 FPS performance target<br/>
+            ✅ TypeScript fully typed<br/>
+            ✅ React 18+ compatible<br/>
+            ✅ Mobile responsive<br/>
+            ✅ Accessibility support<br/>
+            ✅ Zero external dependencies</p>
+        </div>
+    </div>
+
+    <script>
+        // Create twinkling stars
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 50;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = Math.random() * 3 + 'px';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        createStars();
+    </script>
+</body>
+</html>
