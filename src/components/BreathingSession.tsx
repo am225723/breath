@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { BreathingRite, Session } from '../types';
+import type { BreathingRite, Session, CovenantType } from '../types';
 import { RealisticFlame } from './RealisticFlame';
 import { AudioNarrator } from './AudioNarrator';
 import { DynamicBackground } from './DynamicBackground';
@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface BreathingSessionProps {
   rite: BreathingRite;
-  covenant?: string;
+  covenant?: CovenantType;
   onComplete: (session: Session) => void;
   onCancel: () => void;
   preRitualNote?: string;
@@ -55,12 +55,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
     return () => clearInterval(interval);
   }, [currentPhaseIndex, currentPhase.duration, rite.phases.length, isPaused]);
 
-  // Auto-complete for Dragon's Roar after set cycles
-  useEffect(() => {
-    if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
-      handleComplete();
-    }
-  }, [cycleCount, totalCycles, rite.id]);
+  
 
   const handleComplete = useCallback(() => {
     const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -71,10 +66,17 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
       duration,
       cycles: cycleCount,
       preRitualNote,
-      covenant: covenant as any,
+      covenant: covenant,
     };
     onComplete(session);
   }, [startTime, rite.id, cycleCount, preRitualNote, covenant, onComplete]);
+
+    // Auto-complete for Dragon's Roar after set cycles
+    useEffect(() => {
+      if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
+        handleComplete();
+      }
+    }, [cycleCount, totalCycles, rite.id, handleComplete]);
 
   const progress = (phaseProgress / currentPhase.duration) * 100;
   const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
@@ -107,7 +109,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
         <div className="mb-8">
           <RealisticFlame 
             level={1} 
-            covenant={covenant as any}
+            covenant={covenant}
             isBreathing={true}
             breathPhase={currentPhase.type}
           />
