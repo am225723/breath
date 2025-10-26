@@ -60,7 +60,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
     if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
       handleComplete();
     }
-  }, [cycleCount, totalCycles, rite.id]);
+  }, [cycleCount, totalCycles, rite.id, handleComplete]);
 
   const handleComplete = useCallback(() => {
     const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -71,7 +71,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
       duration,
       cycles: cycleCount,
       preRitualNote,
-      covenant: covenant as any,
+      covenant: covenant,
     };
     onComplete(session);
   }, [startTime, rite.id, cycleCount, preRitualNote, covenant, onComplete]);
@@ -107,7 +107,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
         <div className="mb-8">
           <RealisticFlame 
             level="steady-flame" 
-            covenant={covenant as any}
+            covenant={covenant}
             isBreathing={true}
             breathPhase={currentPhase.type}
           />
