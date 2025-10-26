@@ -55,7 +55,12 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
     return () => clearInterval(interval);
   }, [currentPhaseIndex, currentPhase.duration, rite.phases.length, isPaused]);
 
-  
+  // Auto-complete for Dragon's Roar after set cycles
+  useEffect(() => {
+    if (rite.id === 'dragons-roar' && cycleCount >= totalCycles) {
+      handleComplete();
+    }
+  }, [cycleCount, totalCycles, rite.id, handleComplete]);
 
   const handleComplete = useCallback(() => {
     const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -108,7 +113,7 @@ export const BreathingSession: React.FC<BreathingSessionProps> = ({
         {/* Realistic Flame */}
         <div className="mb-8">
           <RealisticFlame 
-            level={1} 
+            level="steady-flame" 
             covenant={covenant}
             isBreathing={true}
             breathPhase={currentPhase.type}

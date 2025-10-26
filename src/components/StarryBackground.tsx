@@ -24,6 +24,7 @@ export const StarryBackground: React.FC = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       
+      // Reinitialize stars on resize
       if (starsRef.current.length === 0) {
         initStars();
       }
@@ -54,6 +55,7 @@ export const StarryBackground: React.FC = () => {
     const animate = () => {
       time += 0.016;
 
+      // Create deep space gradient background
       const gradient = ctx.createRadialGradient(
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.8
@@ -64,10 +66,12 @@ export const StarryBackground: React.FC = () => {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Draw stars with twinkling effect
       starsRef.current.forEach(star => {
         const twinkle = Math.sin(time * star.twinkleSpeed + star.twinkleOffset) * 0.3 + 0.7;
         const alpha = star.brightness * twinkle;
         
+        // Star glow
         const glowGradient = ctx.createRadialGradient(
           star.x, star.y, 0,
           star.x, star.y, star.size * 3
@@ -80,6 +84,7 @@ export const StarryBackground: React.FC = () => {
         ctx.arc(star.x, star.y, star.size * 3, 0, Math.PI * 2);
         ctx.fill();
         
+        // Star core
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);

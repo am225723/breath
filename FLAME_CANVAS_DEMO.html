@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flame Animation Canvas Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0514 0%, #05000f 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .demo-container {
+            text-align: center;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #ff5722;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .info {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🔥 Bonfire Flame Animation Demo</h1>
+        
+        <div class="info">
+            <p><strong>Live Canvas Demo</strong> - This shows a simplified version of the flame animation system.</p>
+            <p>The actual React component features 4-layer volumetric rendering, realistic physics, and breathing synchronization.</p>
+        </div>
+        
+        <canvas id="flameCanvas" width="400" height="500"></canvas>
+        
+        <div class="controls">
+            <button onclick="setLevel('smoldering')">Smoldering</button>
+            <button onclick="setLevel('steady-flame')">Steady Flame</button>
+            <button onclick="setLevel('roaring')">Roaring</button>
+            <button onclick="setLevel('first-flame')">First Flame</button>
+            <button onclick="toggleBreathing()">Toggle Breathing</button>
+            <button onclick="toggleAnimation()">Pause/Play</button>
+        </div>
+        
+        <div class="info">
+            <p><strong>Current Settings:</strong></p>
+            <p>Level: <span id="currentLevel">steady-flame</span></p>
+            <p>Breathing: <span id="breathingStatus">ON</span></p>
+            <p>Animation: <span id="animationStatus">PLAYING</span></p>
+            <p>FPS: <span id="fps">60</span></p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('flameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let animationId;
+        let isAnimating = true;
+        let isBreathing = true;
+        let currentLevel = 'steady-flame';
+        let breathPhase = 'inhale';
+        let breathCycle = 0;
+        let lastTime = 0;
+        let fps = 60;
+        
+        // Particle systems
+        let particles = [];
+        let embers = [];
+        
+        // Level configurations
+        const levels = {
+            'smoldering': { particleCount: 15, emberRate: 0.3, baseSize: 80, glowIntensity: 0.6 },
+            'steady-flame': { particleCount: 18, emberRate: 0.45, baseSize: 95, glowIntensity: 0.75 },
+            'roaring': { particleCount: 23, emberRate: 0.55, baseSize: 110, glowIntensity: 0.95 },
+            'first-flame': { particleCount: 30, emberRate: 0.7, baseSize: 130, glowIntensity: 1.2 }
+        };
+        
+        class Particle {
+            constructor(level) {
+                const config = levels[level];
+                this.x = canvas.width / 2 + (Math.random() - 0.5) * config.baseSize * 0.8;
+                this.y = canvas.height * 0.75;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = -Math.random() * 3 - 1;
+                this.life = 0;
+                this.maxLife = 60 + Math.random() * 60;
+                this.size = 8 + Math.random() * 12;
+                this.heat = 0.7 + Math.random() * 0.3;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy *= 0.98;
+                this.life++;
+                this.heat *= 0.98;
+            }
+            
+            draw() {
+                const alpha = Math.sin((this.life / this.maxLife) * Math.PI) * (1 - this.life / this.maxLife * 0.6);
+                if (alpha > 0.01) {
+                    // Simplified flame color
+                    const r = 255;
+                    const g = Math.floor(100 + this.heat * 155);
+                    const b = Math.floor(this.heat * 100);
+                    
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        class Ember {
+            constructor() {
+                this.x = canvas.width / 2 + (Math.random() - 0.5) * 40;
+                this.y = canvas.height * 0.75;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = -Math.random() * 1.5 - 0.5;
+                this.life = 0;
+                this.maxLife = 120 + Math.random() * 80;
+                this.size = 1 + Math.random() * 2;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy -= 0.02;
+                this.life++;
+            }
+            
+            draw() {
+                const alpha = (1 - this.life / this.maxLife) * 0.8;
+                if (alpha > 0.01) {
+                    ctx.fillStyle = `rgba(255, 200, 100, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function getFlameColor(heat) {
+            if (heat > 0.9) return `rgba(255, 255, 200, 0.8)`;
+            if (heat > 0.7) return `rgba(255, 200, 50, 0.6)`;
+            if (heat > 0.4) return `rgba(255, 150, 0, 0.4)`;
+            return `rgba(255, 100, 0, 0.3)`;
+        }
+        
+        function animate(currentTime) {
+            if (!isAnimating) return;
+            
+            // Calculate FPS
+            const deltaTime = currentTime - lastTime;
+            fps = Math.round(1000 / deltaTime);
+            lastTime = currentTime;
+            document.getElementById('fps').textContent = fps;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw atmospheric glow
+            const config = levels[currentLevel];
+            const centerX = canvas.width / 2;
+            const baseY = canvas.height * 0.75;
+            
+            const glowGradient = ctx.createRadialGradient(
+                centerX, baseY - config.baseSize * 0.5, 0,
+                centerX, baseY - config.baseSize * 0.5, config.baseSize * 2
+            );
+            glowGradient.addColorStop(0, `rgba(255, 150, 50, ${0.15 * config.glowIntensity})`);
+            glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Breathing effect
+            let breathScale = 1;
+            if (isBreathing) {
+                breathCycle += 0.02;
+                const breathValue = Math.sin(breathCycle);
+                if (breathValue > 0) {
+                    breathScale = 1 + breathValue * 0.4;
+                    breathPhase = 'inhale';
+                } else {
+                    breathScale = 1 + breathValue * 0.3;
+                    breathPhase = 'exhale';
+                }
+            }
+            
+            // Spawn new particles
+            for (let i = 0; i < config.particleCount * 0.3; i++) {
+                if (Math.random() < 0.3) {
+                    particles.push(new Particle(currentLevel));
+                }
+            }
+            
+            // Spawn embers
+            if (Math.random() < config.emberRate) {
+                embers.push(new Ember());
+            }
+            
+            // Update and draw particles
+            particles = particles.filter(particle => {
+                particle.update();
+                particle.draw();
+                return particle.life < particle.maxLife;
+            });
+            
+            // Update and draw embers
+            embers = embers.filter(ember => {
+                ember.update();
+                ember.draw();
+                return ember.life < ember.maxLife;
+            });
+            
+            // Draw core glow
+            const coreGradient = ctx.createRadialGradient(
+                centerX, baseY - 20, 0,
+                centerX, baseY - 20, config.baseSize * 0.6
+            );
+            coreGradient.addColorStop(0, `rgba(255, 255, 200, ${0.4 * config.glowIntensity})`);
+            coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = coreGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function setLevel(level) {
+            currentLevel = level;
+            document.getElementById('currentLevel').textContent = level;
+        }
+        
+        function toggleBreathing() {
+            isBreathing = !isBreathing;
+            document.getElementById('breathingStatus').textContent = isBreathing ? 'ON' : 'OFF';
+        }
+        
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            document.getElementById('animationStatus').textContent = isAnimating ? 'PLAYING' : 'PAUSED';
+            if (isAnimating) {
+                animate(performance.now());
+            }
+        }
+        
+        // Start animation
+        animate(performance.now());
+    </script>
+</body>
+</html>
