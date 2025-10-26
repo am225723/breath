@@ -1,10 +1,9 @@
 import React from 'react';
-import type { BreathingRite, CovenantType, Session } from '../types';
-// FIX 1: Import the uppercase versions
+// FIX: Import the full 'Covenant' object type, not just 'CovenantType'
+import type { BreathingRite, CovenantType, Session, Covenant } from '../types'; 
 import { BREATHING_RITES } from '../data/breathingRites';
 import { COVENANTS } from '../data/covenants';
-// This import path was fixed in the previous step
-import { RealisticFlame } from './RealisticFlameComplete.tsx'; 
+import { RealisticFlame } from './RealisticFlameComplete.tsx';
 
 interface MainMenuProps {
   onStartSession: (rite: BreathingRite, covenant?: CovenantType) => void;
@@ -19,12 +18,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onShowMap,
   lastSession,
 }) => {
-  // FIX 2: Use Object.values() since BREATHING_RITES is an object
-  const defaultRite = Object.values(BREATHING_RITES)[0]; 
+  const defaultRite = Object.values(BREATHING_RITES)[0];
   
-  // FIX 3: Use Object.values() and provide a type for 'c' to fix TS7006
+  // FIX: Change the parameter 'c' to be of type 'Covenant'
   const lastCovenant = lastSession 
-    ? Object.values(COVENANTS).find((c: CovenantType) => c.id === lastSession.covenant) 
+    ? Object.values(COVENANTS).find((c: Covenant) => c.id === lastSession.covenant) 
     : undefined;
 
   return (
@@ -62,7 +60,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </div>
 
         {/* Main Actions */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-12">
+        <div className="flex flex-col sm-flex-row gap-6 mb-12">
           <button
             onClick={() => onStartSession(defaultRite, lastCovenant?.id)}
             className="px-10 py-5 bg-ember-600 hover:bg-ember-500 text-ash-900 text-2xl font-bold rounded-lg transition-colors text-shadow-sm shadow-lg"
