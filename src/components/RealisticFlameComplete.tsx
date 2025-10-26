@@ -8,41 +8,56 @@ interface RealisticFlameProps {
   breathPhase?: 'inhale' | 'hold' | 'exhale' | 'hold-empty';
 }
 
-// Flame particle interface - represents individual flame particles
+// Particle for the main flame body (white/yellow/pink)
 interface FlameParticle {
-  x: number;              // X position
-  y: number;              // Y position
-  vx: number;             // X velocity
-  vy: number;             // Y velocity (negative = upward)
-  life: number;           // Current lifetime counter
-  maxLife: number;        // Maximum lifetime before particle dies
-  size: number;           // Particle size in pixels
-  heat: number;           // Heat value (0-1) determines color
-  turbulence: number;     // Turbulence strength for movement
-  angle: number;          // Current rotation angle
-  angleVelocity: number;  // Rotation speed
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  opacity: number;
+  turbulence: number;
+  angle: number;
+  angleVelocity: number;
 }
 
-// Ember particle interface - represents glowing embers rising from flame
+// Particle for the blue wisps at the top
+interface WispParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  opacity: number;
+  turbulence: number;
+}
+
+// Particle for the bright sparks
 interface Ember {
-  x: number;              // X position
-  y: number;              // Y position
-  vx: number;             // X velocity
-  vy: number;             // Y velocity (negative = upward)
-  life: number;           // Current lifetime counter
-  maxLife: number;        // Maximum lifetime before ember fades
-  size: number;           // Ember size in pixels
-  brightness: number;     // Brightness value (0-1)
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  brightness: number;
 }
 
-export const RealisticFlame: React.FC<RealisticFlameProps> = ({
+// Changed from 'export const' to just 'const'
+const RealisticFlame: React.FC<RealisticFlameProps> = ({
   level,
-  covenant,
+  // covenant, // Covenant logic removed for this specific style
   isBreathing = false,
   breathPhase = 'hold'
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const flameParticlesRef = useRef<FlameParticle[]>([]);
+  const wispParticlesRef = useRef<WispParticle[]>([]);
   const embersRef = useRef<Ember[]>([]);
   const timeRef = useRef(0);
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -59,26 +74,25 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
     canvas.height = 500;
 
     const centerX = canvas.width / 2;
-    const baseY = canvas.height * 0.75;
+    const baseY = canvas.height * 0.85; // Move base lower for more room
 
     // Breathing scale and intensity management
     let breathScale = 1;
     let breathTarget = 1;
     let breathIntensity = 1;
 
-    // Update breathing parameters based on current phase
     if (isBreathing) {
       switch (breathPhase) {
         case 'inhale':
-          breathTarget = 1.4;
-          breathIntensity = 1.3;
+          breathTarget = 1.3;
+          breathIntensity = 1.2;
           break;
         case 'hold':
           breathTarget = 1.1;
-          breathIntensity = 1.1;
+          breathIntensity = 1.0;
           break;
         case 'exhale':
-          breathTarget = 0.7;
+          breathTarget = 0.8;
           breathIntensity = 0.8;
           break;
         case 'hold-empty':
@@ -88,7 +102,7 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
       }
     }
 
-    // Bonfire level parameters - determines flame characteristics
+    // Bonfire level parameters
     let baseSize = 80;
     let particleDensity = 15;
     let emberRate = 0.3;
@@ -97,77 +111,85 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
 
     switch (level) {
       case 'first-flame':
-        baseSize = 130;
-        particleDensity = 30;
+        baseSize = 100;
+        particleDensity = 25;
         emberRate = 0.7;
-        glowIntensity = 1.2;
-        flameHeight = 1.5;
-        break;
-      case 'roaring':
-        baseSize = 110;
-        particleDensity = 23;
-        emberRate = 0.55;
-        glowIntensity = 0.95;
+        glowIntensity = 1.0;
         flameHeight = 1.4;
         break;
-      case 'steady-flame':
-        baseSize = 95;
-        particleDensity = 18;
-        emberRate = 0.45;
-        glowIntensity = 0.75;
+      case 'roaring':
+        baseSize = 90;
+        particleDensity = 20;
+        emberRate = 0.5;
+        glowIntensity = 0.8;
         flameHeight = 1.3;
         break;
-      case 'smoldering':
+      case 'steady-flame':
         baseSize = 80;
         particleDensity = 15;
         emberRate = 0.3;
         glowIntensity = 0.6;
         flameHeight = 1.2;
         break;
+      case 'smoldering':
+        baseSize = 70;
+        particleDensity = 10;
+        emberRate = 0.2;
+        glowIntensity = 0.4;
+        flameHeight = 1.1;
+        break;
     }
 
     /**
-     * Color gradient based on heat value (0 = cool, 1 = hot)
-     * Physically-based color progression from deep red to white-hot
+     * Color gradient for the main flame body, based on lifeRatio (0 = spawn, 1 = death)
+     * This matches the white -> yellow -> red/pink progression
      */
-    const getFlameColor = (heat: number, alpha: number = 1): string => {
-      if (heat > 0.9) {
-        // White-hot core - hottest part of flame
-        return `rgba(255, 255, ${200 + Math.floor(heat * 55)}, ${alpha})`;
-      } else if (heat > 0.7) {
-        // Bright yellow - very hot
-        const r = 255;
-        const g = 200 + Math.floor((heat - 0.7) * 275);
-        const b = Math.floor((1 - heat) * 100);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      } else if (heat > 0.4) {
-        // Orange - hot
-        const r = 255;
-        const g = 100 + Math.floor(heat * 200);
-        const b = 0;
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      } else if (heat > 0.2) {
-        // Deep orange to red - warm
-        const r = 255;
-        const g = Math.floor(heat * 200);
-        const b = Math.floor(heat * 50);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    const getFlameColor = (lifeRatio: number, alpha: number): string => {
+      if (lifeRatio < 0.2) {
+        // 0.0 - 0.2: White-hot base
+        return `rgba(255, 255, 230, ${alpha})`;
+      } else if (lifeRatio < 0.5) {
+        // 0.2 - 0.5: Transition to Yellow
+        const progress = (lifeRatio - 0.2) / 0.3;
+        const g = 255 - Math.floor(progress * 35); // 255 -> 220
+        const b = 230 - Math.floor(progress * 130); // 230 -> 100
+        return `rgba(255, ${g}, ${b}, ${alpha})`;
+      } else if (lifeRatio < 0.8) {
+        // 0.5 - 0.8: Transition to Reddish-Pink
+        const progress = (lifeRatio - 0.5) / 0.3;
+        const g = 220 - Math.floor(progress * 120); // 220 -> 100
+        const b = 100 + Math.floor(progress * 20); // 100 -> 120
+        return `rgba(255, ${g}, ${b}, ${alpha})`;
       } else {
-        // Deep red with purple hints - coolest visible flame
-        const r = 180 + Math.floor(heat * 375);
-        const g = Math.floor(heat * 100);
-        const b = Math.floor(heat * 150);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        // 0.8 - 1.0: Fade out as pink
+        return `rgba(255, 100, 120, ${alpha})`;
       }
     };
 
     /**
-     * Create a new flame particle at the base of the fire
-     * Particles spawn with random angle and velocity
+     * Color gradient for the wisps, based on lifeRatio
+     * This matches the cyan/blue progression
+     */
+    const getWispColor = (lifeRatio: number, alpha: number): string => {
+      if (lifeRatio < 0.3) {
+        // 0.0 - 0.3: Transition from flame color (pink/white) to cyan
+        const progress = lifeRatio / 0.3;
+        const r = 255 - Math.floor(progress * 255); // 255 -> 0
+        const g = 100 + Math.floor(progress * 120); // 100 -> 220
+        const b = 120 + Math.floor(progress * 135); // 120 -> 255
+        return `rgba(${r}, ${g}, ${b}, ${alpha * 0.7})`; // Start slightly faded
+      } else {
+        // 0.3 - 1.0: Bright Cyan
+        return `rgba(0, 220, 255, ${alpha})`;
+      }
+    };
+
+    /**
+     * Create a new flame particle at the base
      */
     const createFlameParticle = (): FlameParticle => {
-      const angle = (Math.random() - 0.5) * Math.PI * 0.7; // ±63 degrees
-      const distance = Math.random() * baseSize * 0.4;
+      const angle = (Math.random() - 0.5) * Math.PI * 0.5; // Narrower base
+      const distance = Math.random() * baseSize * 0.3;
       const speed = 1.5 + Math.random() * 2;
 
       return {
@@ -176,9 +198,9 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
         vx: Math.cos(angle) * speed * 0.3,
         vy: -speed * flameHeight,
         life: 0,
-        maxLife: 60 + Math.random() * 60,
-        size: 8 + Math.random() * 12,
-        heat: 0.7 + Math.random() * 0.3,
+        maxLife: 40 + Math.random() * 40, // Shorter lifespan to force transition
+        size: 10 + Math.random() * 15, // Slightly smaller, denser particles
+        opacity: 0.8 + Math.random() * 0.2,
         turbulence: 3 + Math.random() * 4,
         angle: Math.random() * Math.PI * 2,
         angleVelocity: (Math.random() - 0.5) * 0.1
@@ -186,224 +208,186 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
     };
 
     /**
-     * Create a new ember particle
-     * Embers are smaller, slower particles that rise from the flame
+     * Create a new wisp particle, spawned from a flame particle
+     */
+    const createWispParticle = (x: number, y: number): WispParticle => {
+      return {
+        x: x + (Math.random() - 0.5) * 10,
+        y: y,
+        vx: (Math.random() - 0.5) * 0.5, // Less horizontal drift
+        vy: -1.5 - Math.random() * 1, // Strong, steady upward velocity
+        life: 0,
+        maxLife: 60 + Math.random() * 60, // Longer lifespan
+        size: 8 + Math.random() * 12,
+        opacity: 0.6 + Math.random() * 0.3,
+        turbulence: 1 + Math.random() * 1, // Much less turbulence
+      };
+    };
+
+    /**
+     * Create a new ember (spark)
      */
     const createEmber = (): Ember => {
-      const angle = (Math.random() - 0.5) * Math.PI * 0.4;
       return {
-        x: centerX + Math.cos(angle) * baseSize * 0.3,
-        y: baseY - 20,
-        vx: Math.cos(angle) * (0.5 + Math.random() * 0.5),
-        vy: -(0.5 + Math.random() * 1),
+        x: centerX + (Math.random() - 0.5) * baseSize * 0.5,
+        y: baseY - Math.random() * baseSize * 0.5,
+        vx: (Math.random() - 0.5) * 2, // More horizontal "spark" velocity
+        vy: -(1 + Math.random() * 2), // Pop upwards
         life: 0,
-        maxLife: 120 + Math.random() * 80,
-        size: 1 + Math.random() * 2,
-        brightness: 0.6 + Math.random() * 0.4
+        maxLife: 80 + Math.random() * 80,
+        size: 1 + Math.random() * 2.5,
+        brightness: 0.7 + Math.random() * 0.3
       };
     };
 
     /**
      * Main animation loop
-     * Handles particle spawning, updating, and rendering
      */
     const animate = () => {
       timeRef.current += 0.016; // ~60fps time step
       
-      // Smooth breathing transition using linear interpolation
       breathScale += (breathTarget - breathScale) * 0.03;
 
-      // Clear canvas for new frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Spawn flame particles based on density and breathing intensity
+      // --- Spawn new particles ---
       const spawnRate = particleDensity * breathIntensity;
       for (let i = 0; i < spawnRate; i++) {
-        if (Math.random() < 0.3) {
+        if (Math.random() < 0.5) { // Denser core
           flameParticlesRef.current.push(createFlameParticle());
         }
       }
 
-      // Spawn embers based on ember rate and breathing intensity
       if (Math.random() < emberRate * breathIntensity) {
         embersRef.current.push(createEmber());
       }
 
-      // Draw atmospheric glow - outermost layer for ambient lighting
+      // --- Draw Base Glow (White/Yellow) ---
       const glowGradient = ctx.createRadialGradient(
-        centerX, baseY - baseSize * breathScale * 0.5, 0,
-        centerX, baseY - baseSize * breathScale * 0.5, baseSize * breathScale * 2
+        centerX, baseY - baseSize * breathScale * 0.2, 0,
+        centerX, baseY - baseSize * breathScale * 0.2, baseSize * breathScale * 1.5
       );
-      glowGradient.addColorStop(0, `rgba(255, 150, 50, ${0.15 * glowIntensity})`);
-      glowGradient.addColorStop(0.5, `rgba(255, 100, 0, ${0.05 * glowIntensity})`);
+      glowGradient.addColorStop(0, `rgba(255, 255, 220, ${0.25 * glowIntensity})`);
+      glowGradient.addColorStop(0.3, `rgba(255, 200, 100, ${0.1 * glowIntensity})`);
       glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      /**
-       * Update and draw flame particles
-       * Particles are rendered back-to-front for proper layering
-       */
+
+      // --- Update and Draw Flame Particles (White/Yellow/Pink) ---
       flameParticlesRef.current = flameParticlesRef.current.filter(particle => {
         particle.life++;
-        
-        // Apply complex turbulence with multiple frequencies for realistic movement
+        const lifeRatio = particle.life / particle.maxLife;
+
+        // Apply turbulence
         const turbulence1 = Math.sin(timeRef.current * 2 + particle.angle) * particle.turbulence;
         const turbulence2 = Math.cos(timeRef.current * 3.5 + particle.angle * 2) * particle.turbulence * 0.5;
-        const turbulence3 = Math.sin(timeRef.current * 1.2 + particle.y * 0.01) * particle.turbulence * 0.3;
         
         particle.x += particle.vx + turbulence1 + turbulence2;
-        particle.y += particle.vy * breathScale + turbulence3;
+        particle.y += particle.vy * breathScale;
         particle.angle += particle.angleVelocity;
         
-        // Simulate air resistance and buoyancy
-        particle.vy *= 0.975; // Slow down vertical movement
-        particle.vx *= 0.96;  // Dampen horizontal movement
+        particle.vy *= 0.96; // Air resistance
+        particle.vx *= 0.94;
         
-        // Heat dissipation - slower at first, faster as particle ages
-        const lifeRatio = particle.life / particle.maxLife;
-        particle.heat *= (lifeRatio < 0.3) ? 0.995 : 0.98;
+        // --- Spawn Wisps ---
+        // When particle is getting old (high up), spawn blue wisps
+        if (lifeRatio > 0.7 && Math.random() < 0.1) {
+          wispParticlesRef.current.push(createWispParticle(particle.x, particle.y));
+        }
         
-        // Calculate alpha for smooth fade out using sine wave
-        const alpha = Math.sin(lifeRatio * Math.PI) * (1 - lifeRatio * 0.6);
+        const alpha = Math.sin(lifeRatio * Math.PI) * particle.opacity;
         
         if (alpha > 0.01) {
-          // Draw particle with 4-layer volumetric effect
-          const size = particle.size * breathScale * (1 - lifeRatio * 0.4);
+          const size = particle.size * breathScale * (1 - lifeRatio * 0.5);
+          const color = getFlameColor(lifeRatio, alpha);
           
-          // Layer 1: Far outer glow (atmospheric)
-          const atmosphericGradient = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, size * 2.5
-          );
-          atmosphericGradient.addColorStop(0, getFlameColor(particle.heat, alpha * 0.3));
-          atmosphericGradient.addColorStop(0.4, getFlameColor(particle.heat * 0.8, alpha * 0.15));
-          atmosphericGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = atmosphericGradient;
-          ctx.beginPath();
-          ctx.arc(particle.x, particle.y, size * 2.5, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Layer 2: Outer glow
-          const outerGradient = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, size * 1.5
-          );
-          outerGradient.addColorStop(0, getFlameColor(particle.heat, alpha * 0.6));
-          outerGradient.addColorStop(0.5, getFlameColor(particle.heat * 0.9, alpha * 0.3));
-          outerGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = outerGradient;
-          ctx.beginPath();
-          ctx.arc(particle.x, particle.y, size * 1.5, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Layer 3: Core
+          // Render simple particle (core + glow)
           const coreGradient = ctx.createRadialGradient(
             particle.x, particle.y, 0,
             particle.x, particle.y, size
           );
-          coreGradient.addColorStop(0, getFlameColor(particle.heat, alpha));
-          coreGradient.addColorStop(0.6, getFlameColor(particle.heat * 0.95, alpha * 0.8));
-          coreGradient.addColorStop(1, getFlameColor(particle.heat * 0.7, alpha * 0.3));
+          coreGradient.addColorStop(0, color);
+          coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
           
           ctx.fillStyle = coreGradient;
           ctx.beginPath();
           ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
           ctx.fill();
-          
-          // Layer 4: Hot core center (only for very hot particles)
-          if (particle.heat > 0.8) {
-            const hotCoreGradient = ctx.createRadialGradient(
-              particle.x, particle.y, 0,
-              particle.x, particle.y, size * 0.4
-            );
-            hotCoreGradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-            hotCoreGradient.addColorStop(0.5, getFlameColor(1, alpha * 0.8));
-            hotCoreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            
-            ctx.fillStyle = hotCoreGradient;
-            ctx.beginPath();
-            ctx.arc(particle.x, particle.y, size * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-          }
         }
         
-        // Keep particle alive if it hasn't exceeded max lifetime
         return particle.life < particle.maxLife;
       });
 
-      // Draw intense core bloom at flame base
-      const bloomSize = baseSize * breathScale * 0.6;
-      const bloomGradient = ctx.createRadialGradient(
-        centerX, baseY - bloomSize * 0.3, 0,
-        centerX, baseY - bloomSize * 0.3, bloomSize * 1.5
-      );
-      bloomGradient.addColorStop(0, `rgba(255, 255, 200, ${0.4 * glowIntensity})`);
-      bloomGradient.addColorStop(0.3, `rgba(255, 200, 100, ${0.3 * glowIntensity})`);
-      bloomGradient.addColorStop(0.6, `rgba(255, 150, 50, ${0.15 * glowIntensity})`);
-      bloomGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      
-      ctx.fillStyle = bloomGradient;
-      ctx.beginPath();
-      ctx.arc(centerX, baseY - bloomSize * 0.3, bloomSize * 1.5, 0, Math.PI * 2);
-      ctx.fill();
+      // --- Update and Draw Wisp Particles (Blue/Cyan) ---
+      wispParticlesRef.current = wispParticlesRef.current.filter(particle => {
+        particle.life++;
+        const lifeRatio = particle.life / particle.maxLife;
 
-      /**
-       * Update and draw embers
-       * Embers rise slowly and fade out over time
-       */
+        // Apply *gentle* turbulence for smoky feel
+        const turbulence = Math.sin(timeRef.current * 0.5 + particle.y * 0.02) * particle.turbulence;
+        
+        particle.x += particle.vx + turbulence;
+        particle.y += particle.vy * breathScale; // Still affected by breath
+        
+        particle.vy *= 0.98; // Less slowdown
+        particle.vx *= 0.96;
+        
+        const alpha = Math.sin(lifeRatio * Math.PI) * particle.opacity;
+        
+        if (alpha > 0.01) {
+          const size = particle.size * (1 - lifeRatio * 0.3); // Wisps get thinner
+          const color = getWispColor(lifeRatio, alpha);
+
+          // Render wisp (softer glow)
+          const wispGradient = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, size * 1.5 // Softer, larger glow
+          );
+          wispGradient.addColorStop(0, color);
+          wispGradient.addColorStop(0.5, color.replace(/, [0-9\.]+\)/, `, ${alpha * 0.3})`));
+          wispGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          
+          ctx.fillStyle = wispGradient;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, size * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        return particle.life < particle.maxLife;
+      });
+
+      // --- Draw Embers (Sparks) ---
       embersRef.current = embersRef.current.filter(ember => {
         ember.life++;
         ember.x += ember.vx;
         ember.y += ember.vy;
-        ember.vy -= 0.02; // Slight upward acceleration
-        ember.vx *= 0.99; // Dampen horizontal movement
+        ember.vy += 0.05; // Gravity
         
         const lifeRatio = ember.life / ember.maxLife;
         const alpha = (1 - lifeRatio) * ember.brightness;
-        const size = ember.size * (1 - lifeRatio * 0.5);
         
         if (alpha > 0.01) {
-          // Ember glow
-          const emberGradient = ctx.createRadialGradient(
-            ember.x, ember.y, 0,
-            ember.x, ember.y, size * 3
-          );
-          emberGradient.addColorStop(0, `rgba(255, 200, 100, ${alpha * 0.6})`);
-          emberGradient.addColorStop(0.5, `rgba(255, 150, 50, ${alpha * 0.3})`);
-          emberGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = emberGradient;
+          ctx.fillStyle = `rgba(255, 180, 50, ${alpha})`; // Bright orange
           ctx.beginPath();
-          ctx.arc(ember.x, ember.y, size * 3, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Ember core
-          ctx.fillStyle = `rgba(255, 200, 100, ${alpha})`;
-          ctx.beginPath();
-          ctx.arc(ember.x, ember.y, size, 0, Math.PI * 2);
+          ctx.arc(ember.x, ember.y, ember.size, 0, Math.PI * 2);
           ctx.fill();
         }
         
-        return ember.life < ember.maxLife;
+        return particle.life < particle.maxLife;
       });
 
-      // Continue animation loop
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    // Start animation
     animate();
 
-    // Cleanup on unmount
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [level, covenant, isBreathing, breathPhase]);
+  }, [level, isBreathing, breathPhase]); // Removed covenant from deps
 
   return (
     <div className="flex items-center justify-center">
@@ -411,10 +395,14 @@ export const RealisticFlame: React.FC<RealisticFlameProps> = ({
         ref={canvasRef}
         className="max-w-full h-auto"
         style={{ 
-          filter: 'blur(0.5px)', // Slight blur for softer appearance
-          imageRendering: 'crisp-edges' // Maintain sharpness
+          filter: 'blur(0.5px)',
+          imageRendering: 'crisp-edges'
         }}
       />
     </div>
   );
 };
+
+// Added default export
+export default RealisticFlame;
+
