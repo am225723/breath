@@ -63,5 +63,3 @@ const RealisticFlame: React.FC<RealisticFlameProps> = ({
 };
 
 export default RealisticFlame;
-
-
