@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import Lottie from 'lottie-react';
+import React, { useEffect, useRef } from 'react'; // Removed useState, added useRef
+import Lottie, { LottieRefCurrentProps } from 'lottie-react'; // Added LottieRefCurrentProps
 import type { BonfireLevel, CovenantType } from '../types';
 // Import the Lottie animation data
 import flameAnimationData from '../assets/flame-animation.json';
 
-// The props interface remains the same to avoid breaking other components
+// The props interface remains the same
 interface RealisticFlameProps {
   level: BonfireLevel;
   covenant?: CovenantType;
@@ -23,39 +23,46 @@ const RealisticFlame: React.FC<RealisticFlameProps> = ({
   isBreathing = false,
   breathPhase = 'hold'
 }) => {
-  const [animationSpeed, setAnimationSpeed] = useState(1.0);
+  // Use a ref to control the Lottie animation directly
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
 
   // This effect runs when the breathing state changes
   useEffect(() => {
-    // If not in an active breathing session, play at normal speed
-    if (!isBreathing) {
-      setAnimationSpeed(1.0);
+    // Wait until the Lottie animation has loaded and the ref is attached
+    if (!lottieRef.current) {
       return;
     }
 
-    // Adjust speed based on the breathing phase
+    // If not in an active breathing session, play at normal speed
+    if (!isBreathing) {
+      lottieRef.current.setSpeed(1.0);
+      return;
+    }
+
+    // Adjust speed based on the breathing phase by calling setSpeed()
     switch (breathPhase) {
       case 'inhale':
-        setAnimationSpeed(1.5); // Speed up for inhale
+        lottieRef.current.setSpeed(1.5); // Speed up for inhale
         break;
       case 'exhale':
-        setAnimationSpeed(0.7); // Slow down for exhale
+        lottieRef.current.setSpeed(0.7); // Slow down for exhale
         break;
       case 'hold':
       case 'hold-empty':
       default:
-        setAnimationSpeed(1.0); // Normal speed for holds
+        lottieRef.current.setSpeed(1.0); // Normal speed for holds
         break;
     }
-  }, [isBreathing, breathPhase]);
+  }, [isBreathing, breathPhase]); // Dependencies remain the same
 
   return (
     <div className="flex items-center justify-center" style={{ width: 400, height: 500 }}>
       <Lottie
+        lottieRef={lottieRef} // Pass the ref here
         animationData={flameAnimationData}
         loop={true}
         autoplay={true}
-        speed={animationSpeed}
+        // The invalid 'speed' prop is removed
         style={{ width: '100%', height: '100%' }}
       />
     </div>
