@@ -1,10 +1,9 @@
 import React from 'react';
 import type { BreathingPattern, UserProgress } from '../types';
-// FIX: Imports were uppercase
 import { BREATHING_RITES } from '../data/breathingRites';
 import { COVENANTS } from '../data/covenants';
-// FIX: Using the correct flame component with .tsx
-import { RealisticFlame } from './RealisticFlameComplete.tsx';
+// FIX: Use default import and add .tsx extension
+import RealisticFlame from './RealisticFlameComplete.tsx';
 
 interface MainMenuProps {
   progress: UserProgress;
@@ -146,3 +145,4 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     </div>
   );
 };
+
