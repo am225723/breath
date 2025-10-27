@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'; // Removed useState, added useRef
-import Lottie, { LottieRefCurrentProps } from 'lottie-react'; // Added LottieRefCurrentProps
+import Lottie from 'lottie-react';
+import type { LottieRefCurrentProps } from 'lottie-react';
 import type { BonfireLevel, CovenantType } from '../types';
 // Import the Lottie animation data
 import flameAnimationData from '../assets/flame-animation.json';
